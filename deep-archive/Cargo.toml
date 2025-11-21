@@ -1,0 +1,25 @@
+[package]
+name = "deep-archive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rayon = "1.10.0"
+crossbeam = "0.8.4"
+walkdir = "2.5.0"
+memmap2 = "0.9.4"
+sha2 = "0.10.8"
+hex = "0.4.3"
+infer = "0.16.0"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.122"
+image = "0.25.2"
+ort = { version = "2.0.0-rc.9", features = ["cuda", "coreml"] }
+ndarray = "0.16.1"
+anyhow = "1.0.86"
+thiserror = "1.0.63"
+indicatif = "0.17.8"
+clap = { version = "4.5.13", features = ["derive"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.20"
