@@ -13,8 +13,8 @@ echo -e "${GREEN}Setting up Project Deep Archive environment...${NC}"
 echo "Checking directories..."
 mkdir -p models
 mkdir -p data
-mkdir -p output
-echo -e "${GREEN}✔ Directories created/verified (models, data, output)${NC}"
+mkdir -p iso
+echo -e "${GREEN}✔ Directories created/verified (models, data, iso)${NC}"
 
 # 2. System Dependencies
 echo "Checking system dependencies..."

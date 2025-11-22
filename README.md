@@ -11,7 +11,7 @@ To prepare the runtime environment, run the setup script:
 ```
 
 This script will:
-1. Create necessary directories (`models`, `data`, `output`).
+1. Create necessary directories (`models`, `data`, `iso`).
 2. Check for system dependencies (`ffmpeg`, `xorriso`).
 3. Download the required ONNX models.
 
@@ -20,7 +20,7 @@ This script will:
 Once the environment is set up, you can run the pipeline with the following command:
 
 ```bash
-cargo run --release -- --input-dir ./media --db-path ./data/archive_index.db --output-iso output/archive.iso
+cargo run --release -- --input-dir ./media --db-path ./data/archive_index.db --output-iso iso/archive.iso
 ```
 
 ### Arguments

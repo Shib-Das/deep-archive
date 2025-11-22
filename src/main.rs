@@ -31,8 +31,8 @@ struct Args {
     #[arg(short, long)]
     db_path: String,
 
-    #[arg(short, long)]
-    output_iso: Option<PathBuf>,
+    #[arg(short, long, default_value = "iso/archive.iso")]
+    output_iso: PathBuf,
 }
 
 struct MediaJob {
@@ -217,13 +217,11 @@ fn main() -> Result<()> {
     for h in worker_handles { h.join().unwrap(); }
     db_handle.join().unwrap();
 
-    if let Some(iso_path) = args.output_iso {
-        info!("Creating ISO archive at {:?}", iso_path);
-        if let Err(e) = crate::archive::iso_builder::create_iso(&args.input_dir, &iso_path) {
-            error!("Archival failed: {}", e);
-        } else {
-            info!("ISO created successfully.");
-        }
+    info!("Creating ISO archive at {:?}", args.output_iso);
+    if let Err(e) = crate::archive::iso_builder::create_iso(&args.input_dir, &args.output_iso) {
+        error!("Archival failed: {}", e);
+    } else {
+        info!("ISO created successfully.");
     }
 
     info!("Pipeline completed.");
