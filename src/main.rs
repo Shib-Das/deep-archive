@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crossbeam::channel::bounded;
 use anyhow::Result;
 use clap::Parser;
-use tracing::{info, error};
+use tracing::{info, error, warn};
 use image::{ImageBuffer, Rgb};
 
 use crate::ingest::{scanner, hasher};
@@ -20,6 +20,7 @@ use crate::ml::engine::InferenceEngine;
 use crate::ml::pipeline;
 use crate::media::ffmpeg;
 use crate::media::mimetype;
+use crate::utils::config;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -47,17 +48,29 @@ fn main() -> Result<()> {
     info!("Input: {:?}", args.input_dir);
     info!("DB: {}", args.db_path);
 
-    // Initialize ML Engine (Placeholder paths - would normally come from config)
-    // We wrap it in Arc to share across threads.
-    // Note: This requires models to exist at these paths. For the purpose of this exercise
-    // where we don't have the models, we will allow the pipeline to proceed even if inference fails,
-    // or wrap the engine in an Option if initialization fails.
-    let engine = match InferenceEngine::new("models/nsfw.onnx", "models/tagger.onnx") {
-        Ok(e) => Some(Arc::new(e)),
+    // 1. Locate Models (Auto-search + .env generation)
+    let model_paths = match config::get_model_paths() {
+        Ok(paths) => Some(paths),
         Err(e) => {
-            error!("Failed to initialize AI Engine (check model paths): {}", e);
+            warn!("Could not locate AI models: {}. Inference will be disabled.", e);
             None
         }
+    };
+
+    // 2. Initialize ML Engine
+    let engine = if let Some(paths) = model_paths {
+        let nsfw_str = paths.nsfw.to_string_lossy().to_string();
+        let tagger_str = paths.tagger.to_string_lossy().to_string();
+
+        match InferenceEngine::new(&nsfw_str, &tagger_str) {
+            Ok(e) => Some(Arc::new(e)),
+            Err(e) => {
+                error!("Failed to initialize AI Engine with found paths: {}", e);
+                None
+            }
+        }
+    } else {
+        None
     };
 
     // Channels
@@ -98,7 +111,6 @@ fn main() -> Result<()> {
             info!("Hasher {} finished", i);
         }));
     }
-    // Drop the original tx so receiver closes when all hashers are done
     drop(hash_tx);
 
     // 3. Media/AI Worker Threads
@@ -113,7 +125,6 @@ fn main() -> Result<()> {
         worker_handles.push(thread::spawn(move || {
             info!("Worker {} started", i);
             for job in rx {
-                // Detect Mimetype
                 let media_type = match mimetype::detect_mimetype(&job.path) {
                     Ok(m) => m,
                     Err(e) => {
@@ -125,34 +136,24 @@ fn main() -> Result<()> {
                 let mut nsfw_score = None;
                 let mut tags = Vec::new();
 
-                // Only process video/image types that ffmpeg can handle
                 if media_type.starts_with("video/") || media_type.starts_with("image/") {
                      match ffmpeg::extract_frames(&job.path) {
                         Ok(raw_bytes) => {
-                            // Convert raw bytes (RGB24 224x224) to DynamicImage
-                            // ffmpeg.rs ensures output is 224x224 RGB24
                             if let Some(img_buffer) = ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(224, 224, raw_bytes) {
                                 let dynamic_image = image::DynamicImage::ImageRgb8(img_buffer);
 
-                                if let Some(ref _eng) = engine {
-                                    // NSFW Check
+                                if let Some(ref eng) = engine {
                                     match pipeline::normalize_for_nsfw(&dynamic_image) {
                                         Ok(_input) => {
-                                            // Real inference would go here:
-                                            // let _res = eng.nsfw_session().run(ort::inputs![input]...);
-                                            // For now, simulate score
+                                            // Placeholder for real inference
                                             nsfw_score = Some(0.01);
                                         }
                                         Err(e) => error!("NSFW normalization failed: {}", e),
                                     }
 
-                                    // Tagger Check
-                                    // Note: Tagger might need 448x448, but we only extracted 224x224 from ffmpeg.
-                                    // In a real scenario, we might need two extractions or resize here.
-                                    // For this exercise, we'll skip or just reuse the image (it will be resized in normalize).
                                     match pipeline::normalize_for_tagger(&dynamic_image) {
                                          Ok(_input) => {
-                                            // Real inference...
+                                            // Placeholder for real inference
                                             tags.push("simulated_tag".to_string());
                                          }
                                          Err(e) => error!("Tagger normalization failed: {}", e),
@@ -163,7 +164,6 @@ fn main() -> Result<()> {
                             }
                         }
                         Err(e) => {
-                             // Log but don't crash, regular file or unsupported format for ffmpeg
                              if !media_type.starts_with("text") {
                                  error!("Frame extraction failed for {:?}: {}", job.path, e);
                              }
@@ -175,7 +175,7 @@ fn main() -> Result<()> {
                     hash_sha256: job.hash,
                     original_path: job.path.to_string_lossy().to_string(),
                     media_type,
-                    width: Some(224), // We scaled it
+                    width: Some(224),
                     height: Some(224),
                     tags,
                     nsfw_score,
@@ -212,13 +212,11 @@ fn main() -> Result<()> {
         info!("DB Writer finished");
     });
 
-    // Wait for all
     scanner_handle.join().unwrap();
     for h in hasher_handles { h.join().unwrap(); }
     for h in worker_handles { h.join().unwrap(); }
     db_handle.join().unwrap();
 
-    // Archival Phase (if requested)
     if let Some(iso_path) = args.output_iso {
         info!("Creating ISO archive at {:?}", iso_path);
         if let Err(e) = crate::archive::iso_builder::create_iso(&args.input_dir, &iso_path) {
