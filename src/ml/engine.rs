@@ -1,10 +1,9 @@
-use std::sync::Arc;
 use ort::session::Session;
 use anyhow::{Result, Context};
 
 pub struct InferenceEngine {
-    nsfw_session: Session,
-    tagger_session: Session,
+    _nsfw_session: Session,
+    _tagger_session: Session,
 }
 
 impl InferenceEngine {
@@ -31,16 +30,18 @@ impl InferenceEngine {
             .context("Failed to load Tagger model")?;
 
         Ok(Self {
-            nsfw_session,
-            tagger_session,
+            _nsfw_session: nsfw_session,
+            _tagger_session: tagger_session,
         })
     }
 
+    #[allow(dead_code)]
     pub fn nsfw_session(&self) -> &Session {
-        &self.nsfw_session
+        &self._nsfw_session
     }
 
+    #[allow(dead_code)]
     pub fn tagger_session(&self) -> &Session {
-        &self.tagger_session
+        &self._tagger_session
     }
 }

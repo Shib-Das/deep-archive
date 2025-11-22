@@ -43,7 +43,7 @@ impl TransactionManager {
             return Ok(());
         }
 
-        let mut tx = self.conn.transaction().context("Failed to begin transaction")?;
+        let tx = self.conn.transaction().context("Failed to begin transaction")?;
 
         {
             // We use prepared statements for efficiency.
