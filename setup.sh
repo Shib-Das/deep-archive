@@ -13,8 +13,8 @@ echo -e "${GREEN}Setting up Project Deep Archive environment...${NC}"
 echo "Checking directories..."
 mkdir -p models
 mkdir -p data
-mkdir -p .output
-echo -e "${GREEN}✔ Directories created/verified (models, data, .output)${NC}"
+mkdir -p output
+echo -e "${GREEN}✔ Directories created/verified (models, data, output)${NC}"
 
 # 2. System Dependencies
 echo "Checking system dependencies..."
@@ -73,7 +73,7 @@ download_model() {
     fi
 }
 
-download_model "https://huggingface.co/Falconsai/nsfw_image_detection/resolve/main/model.onnx" "models/nsfw.onnx"
+download_model "https://huggingface.co/GantMan/nsfw_model/resolve/main/onnx/nsfw_mobilenet.onnx" "models/nsfw.onnx"
 download_model "https://huggingface.co/SmilingWolf/wd-v1-4-convnext-tagger-v2/resolve/main/model.onnx" "models/tagger.onnx"
 
 # 4. Permissions (Ensure this script is executable)

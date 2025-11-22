@@ -1,6 +1,7 @@
 use std::path::Path;
 use std::process::Command;
 use std::env;
+use std::fs;
 use anyhow::{Result, Context, anyhow};
 
 pub fn create_iso(source_dir: &Path, output_iso: &Path) -> Result<()> {
@@ -12,6 +13,12 @@ pub fn create_iso(source_dir: &Path, output_iso: &Path) -> Result<()> {
     // Check if it's already set, if not, set to a deterministic value (e.g. 1704067200 for 2024-01-01)
     if env::var("SOURCE_DATE_EPOCH").is_err() {
         env::set_var("SOURCE_DATE_EPOCH", "1704067200");
+    }
+
+    // Ensure the parent directory exists
+    if let Some(parent) = output_iso.parent() {
+        fs::create_dir_all(parent)
+            .context("Failed to create parent directory for ISO output")?;
     }
 
     // Command: xorriso -as mkisofs -o output.iso -R -J source_dir

@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     let engine = match InferenceEngine::new("models/nsfw.onnx", "models/tagger.onnx") {
         Ok(e) => Some(Arc::new(e)),
         Err(e) => {
-            error!("Failed to initialize AI Engine (check model paths): {}", e);
+            error!("Failed to initialize AI Engine: {}. \n\nHint: Have you run './setup.sh' to download the models?", e);
             None
         }
     };
