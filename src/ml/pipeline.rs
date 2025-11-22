@@ -1,4 +1,4 @@
-use ndarray::{Array, Array4, Axis};
+use ndarray::{Array, Array4};
 use image::{DynamicImage, GenericImageView};
 use anyhow::Result;
 
