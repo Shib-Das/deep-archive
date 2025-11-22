@@ -1,5 +1,4 @@
-use std::env;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{Write, BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -108,6 +107,7 @@ fn save_to_env(path: &Path, nsfw: &Path, tagger: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn test_save_and_load_env() -> Result<()> {

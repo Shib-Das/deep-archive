@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crossbeam::channel::bounded;
 use anyhow::Result;
 use clap::Parser;
-use tracing::{info, error, warn};
+use tracing::{info, error};
 use image::{ImageBuffer, Rgb};
 
 use crate::ingest::{scanner, hasher};
@@ -142,7 +142,7 @@ fn main() -> Result<()> {
                             if let Some(img_buffer) = ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(224, 224, raw_bytes) {
                                 let dynamic_image = image::DynamicImage::ImageRgb8(img_buffer);
 
-                                if let Some(ref eng) = engine {
+                                if let Some(ref _eng) = engine {
                                     match pipeline::normalize_for_nsfw(&dynamic_image) {
                                         Ok(_input) => {
                                             // Placeholder for real inference

@@ -24,6 +24,9 @@ target
 output
 media
 data
+*.onnx
+*.iso
+*.env
 
 # Tests Artifacts
 tests/data
